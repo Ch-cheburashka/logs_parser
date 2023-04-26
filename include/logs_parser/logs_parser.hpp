@@ -6,11 +6,14 @@
 #include <utility>
 #include <vector>
 #include <memory>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
 
 class i_logs_parser {
 public:
     virtual ~i_logs_parser() = default;
-    virtual std::vector<std::filesystem::path> parse (const std::filesystem::path& path_to_logs) = 0;
+    virtual std::vector<json> parse (const std::filesystem::path& path_to_logs) = 0;
 };
 
 class logs_parser {
@@ -19,7 +22,7 @@ public:
     void set_parser(std::unique_ptr<i_logs_parser> p) {
         _parser.swap(p);
     }
-    std::vector<std::filesystem::path> parse () {
+    std::vector<json> parse () {
         return _parser->parse(_path);
     }
     ~logs_parser() = default;
@@ -29,11 +32,11 @@ private:
 };
 
 class file_parser : public i_logs_parser {
-    std::vector<std::filesystem::path> parse (const std::filesystem::path& path_to_logs) override;
+    std::vector<json> parse (const std::filesystem::path& path_to_logs) override;
 };
 
 class dir_parser : public i_logs_parser {
-    std::vector<std::filesystem::path> parse (const std::filesystem::path& path_to_logs) override;
+    std::vector<json> parse (const std::filesystem::path& path_to_logs) override;
 };
 
 #endif //LOGS_PARSER_LOGS_PARSER_HPP

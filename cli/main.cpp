@@ -2,16 +2,6 @@
 #include <iostream>
 #include <logs_parser/logs_parser.hpp>
 
-std::vector<std::filesystem::path> sort(const std::string& param, std::vector<std::filesystem::path>&& logs) {
-    std::vector<std::filesystem::path> new_logs;
-    for (auto& i : logs) {
-        if (i.string().find(param) != std::string::npos)
-            new_logs.emplace_back(i);
-    }
-    return new_logs;
-}
-
-
 int main (int argc, char** argv) {
 
     argparse::ArgumentParser opt_desc ("logs_parser");
@@ -26,15 +16,15 @@ int main (int argc, char** argv) {
     .default_value(std::string{});
 
     opt_desc.add_argument("--interval")
-    .default_value(std::vector<std::string>{})
-    .nargs(1,2);
+    .nargs(2)
+    .default_value(std::vector<std::string>{});
 
     opt_desc.add_argument("--substring")
     .default_value(std::string());
 
     opt_desc.parse_args(argc,argv);
 
-    std::vector<std::filesystem::path> logs;
+    std::vector<nlohmann::json> logs;
     if (opt_desc.is_used("--fileparse")) {
         auto file = opt_desc.get<std::string>("--fileparse");
         if (std::filesystem::is_directory(file)) {
@@ -60,24 +50,25 @@ int main (int argc, char** argv) {
 
     if (opt_desc.is_used("--level")) {
         auto level = opt_desc.get<std::string>("--level");
-        logs = sort(level,std::move(logs));
-        for (auto& v : logs)
-            std::cout << v << "\n";
+        for (auto& v : logs) {
+            if (v["level"] == level)
+                std::cout << v["info"] << "\n";
+        }
     }
+
     if (opt_desc.is_used("--interval")) {
         auto interval = opt_desc.get<std::vector<std::string>>("--interval");
-        if (interval.size() > 1)
-            logs = sort(interval[0] + " " + interval[1],std::move(logs));
-        else
-            logs = sort(interval[0], std::move(logs));
-        for (auto& v : logs)
-            std::cout << v << "\n";
+        for (auto& v : logs) {
+            if (v["interval"] == interval[0]+ " " + interval[1])
+                std::cout << v["info"] << "\n";
+        }
     }
     if (opt_desc.is_used("--substring")) {
         auto str = opt_desc.get<std::string>("--substring");
-        logs = sort(str,std::move(logs));
-        for (auto& v : logs)
-            std::cout << v << "\n";
+        for (auto& v : logs) {
+            if (v["info"].get<std::string>().find(str) != std::string::npos)
+                std::cout << v["info"] << "\n";
+        }
     }
 
     return 0;
