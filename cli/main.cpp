@@ -24,7 +24,7 @@ int main (int argc, char** argv) {
 
     opt_desc.parse_args(argc,argv);
 
-    std::vector<nlohmann::json> logs;
+    std::vector<log_info> logs;
     if (opt_desc.is_used("--fileparse")) {
         auto file = opt_desc.get<std::string>("--fileparse");
         if (std::filesystem::is_directory(file)) {
@@ -51,23 +51,23 @@ int main (int argc, char** argv) {
     if (opt_desc.is_used("--level")) {
         auto level = opt_desc.get<std::string>("--level");
         for (auto& v : logs) {
-            if (v["level"] == level)
-                std::cout << v["info"] << "\n";
+            if (v.level == level)
+                std::cout << v.info << "\n";
         }
     }
 
     if (opt_desc.is_used("--interval")) {
         auto interval = opt_desc.get<std::vector<std::string>>("--interval");
         for (auto& v : logs) {
-            if (v["interval"] == interval[0]+ " " + interval[1])
-                std::cout << v["info"] << "\n";
+            if (v.interval == interval[0]+ " " + interval[1])
+                std::cout << v.info << "\n";
         }
     }
     if (opt_desc.is_used("--substring")) {
         auto str = opt_desc.get<std::string>("--substring");
         for (auto& v : logs) {
-            if (v["info"].get<std::string>().find(str) != std::string::npos)
-                std::cout << v["info"] << "\n";
+            if (v.info.find(str) != std::string::npos)
+                std::cout << v.info << "\n";
         }
     }
 
