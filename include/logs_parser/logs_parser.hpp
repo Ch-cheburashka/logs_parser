@@ -11,6 +11,8 @@ struct log_info {
     std::string info;
     std::string interval;
     std::string level;
+
+    log_info(std::string i, std::string in, std::string l) : info(std::move(i)), interval(std::move(in)), level(std::move(l)) {}
 };
 
 class i_logs_parser {
