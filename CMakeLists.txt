@@ -11,6 +11,8 @@ FetchContent_MakeAvailable(argparse)
 
 find_package(nlohmann_json 3.7.0 REQUIRED)
 
+find_package(fmt REQUIRED)
+
 add_library(
         logs_parser
         sources/logs_parser/logs_parser.cpp
@@ -22,7 +24,10 @@ target_include_directories(
         $<INSTALL_INTERFACE:include>
 )
 
+target_link_libraries(logs_parser fmt)
+
 add_executable(cli cli/main.cpp)
+target_link_libraries(cli fmt)
 target_link_libraries(cli argparse)
 target_link_libraries(cli nlohmann_json::nlohmann_json)
 target_link_libraries(cli logs_parser)
