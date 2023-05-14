@@ -48,7 +48,12 @@ int main (int argc, char** argv) {
         logs = logsParser.parse();
     }
 
-    if (opt_desc.is_used("--level")) {
+    bool found_lev = opt_desc.is_used("--level");
+    bool found_inter = opt_desc.is_used("--interval");
+    bool found_substr = opt_desc.is_used("--substring");
+
+
+    if (found_lev && !found_inter && !found_substr) {
         auto level = opt_desc.get<std::string>("--level");
         for (auto& v : logs) {
             if (v.level == level)
@@ -56,17 +61,55 @@ int main (int argc, char** argv) {
         }
     }
 
-    if (opt_desc.is_used("--interval")) {
+    else if (found_lev && found_inter && !found_substr) {
+        auto level = opt_desc.get<std::string>("--level");
+        auto interval = opt_desc.get<std::vector<std::string>>("--interval");
+        for (auto& v : logs) {
+            if (v.level == level && v.interval == interval[0]+ " " + interval[1])
+                std::cout << v.info << "\n";
+        }
+    }
+
+    else if (found_lev && found_inter && found_substr) {
+        auto level = opt_desc.get<std::string>("--level");
+        auto interval = opt_desc.get<std::vector<std::string>>("--interval");
+        auto str = opt_desc.get<std::string>("--substring");
+        for (auto& v : logs) {
+            if (v.level == level && v.interval == interval[0]+ " " + interval[1] && v.info.find(str) != std::string::npos)
+                std::cout << v.info << "\n";
+        }
+    }
+
+    else if (!found_lev && found_inter && found_substr) {
+        auto interval = opt_desc.get<std::vector<std::string>>("--interval");
+        auto str = opt_desc.get<std::string>("--substring");
+        for (auto& v : logs) {
+            if (v.interval == interval[0]+ " " + interval[1] && v.info.find(str) != std::string::npos)
+                std::cout << v.info << "\n";
+        }
+    }
+
+    else if (!found_lev && found_inter && !found_substr) {
         auto interval = opt_desc.get<std::vector<std::string>>("--interval");
         for (auto& v : logs) {
             if (v.interval == interval[0]+ " " + interval[1])
                 std::cout << v.info << "\n";
         }
     }
-    if (opt_desc.is_used("--substring")) {
+
+    else if (!found_lev && !found_inter && found_substr) {
         auto str = opt_desc.get<std::string>("--substring");
         for (auto& v : logs) {
             if (v.info.find(str) != std::string::npos)
+                std::cout << v.info << "\n";
+        }
+    }
+
+    else if (found_lev && !found_inter && found_substr) {
+        auto level = opt_desc.get<std::string>("--level");
+        auto str = opt_desc.get<std::string>("--substring");
+        for (auto& v : logs) {
+            if (v.level == level && v.info.find(str) != std::string::npos)
                 std::cout << v.info << "\n";
         }
     }
