@@ -1,32 +1,39 @@
 #include <argparse/argparse.hpp>
 #include <iostream>
 #include <logs_parser/logs_parser.hpp>
+#include <logs_parser/filters.hpp>
 
-int main (int argc, char** argv) {
+constexpr char *fileparse_arg = "--fileparse";
+constexpr char *dirparse_arg = "--dirparse";
+constexpr char *log_level_arg = "--level";
+constexpr char *interval_arg = "--interval";
+constexpr char *substring_arg = "--substring";
 
-    argparse::ArgumentParser opt_desc ("logs_parser");
+int main(int argc, char **argv) {
 
-    opt_desc.add_argument("--fileparse")
-    .default_value(std::string{});
+    argparse::ArgumentParser opt_desc("logs_parser");
 
-    opt_desc.add_argument("--dirparse")
-    .default_value(std::string{});
+    opt_desc.add_argument(fileparse_arg)
+            .default_value(std::string{});
 
-    opt_desc.add_argument("--level")
-    .default_value(std::string{});
+    opt_desc.add_argument(dirparse_arg)
+            .default_value(std::string{});
 
-    opt_desc.add_argument("--interval")
-    .nargs(2)
-    .default_value(std::vector<std::string>{});
+    opt_desc.add_argument(log_level_arg)
+            .default_value(std::string{});
 
-    opt_desc.add_argument("--substring")
-    .default_value(std::string());
+    opt_desc.add_argument(interval_arg)
+            .nargs(2)
+            .default_value(std::vector<std::string>{});
 
-    opt_desc.parse_args(argc,argv);
+    opt_desc.add_argument(substring_arg)
+            .default_value(std::string());
 
-    std::vector<log_info> logs;
-    if (opt_desc.is_used("--fileparse")) {
-        auto file = opt_desc.get<std::string>("--fileparse");
+    opt_desc.parse_args(argc, argv);
+
+    std::list<log_info> logs;
+    if (opt_desc.is_used(fileparse_arg)) {
+        auto file = opt_desc.get<std::string>(fileparse_arg);
         if (std::filesystem::is_directory(file)) {
             throw std::logic_error("the path to the directory was provided");
         }
@@ -36,10 +43,8 @@ int main (int argc, char** argv) {
         logs_parser logsParser(file);
         logsParser.set_parser(std::make_unique<file_parser>());
         logs = logsParser.parse();
-    }
-
-    else if (opt_desc.is_used("--dirparse")) {
-        auto dir = opt_desc.get<std::string>("--dirparse");
+    } else if (opt_desc.is_used(dirparse_arg)) {
+        auto dir = opt_desc.get<std::string>(dirparse_arg);
         if (std::filesystem::is_regular_file(dir)) {
             throw std::logic_error("the path to the file was provided");
         }
@@ -48,28 +53,32 @@ int main (int argc, char** argv) {
         logs = logsParser.parse();
     }
 
-    if (opt_desc.is_used("--level")) {
-        auto level = opt_desc.get<std::string>("--level");
-        for (auto& v : logs) {
-            if (v.level == level)
-                std::cout << v.info << "\n";
+    std::list<std::unique_ptr<i_log_filter>> filters{};
+
+    if (opt_desc.is_used(log_level_arg)) {
+        filters.emplace_back(
+                std::make_unique<level_filter>(opt_desc.get<std::string>(log_level_arg))
+        );
+    }
+
+    if (opt_desc.is_used(interval_arg)) {
+        filters.emplace_back(
+                std::make_unique<interval_filter>(opt_desc.get<std::string>(interval_arg))
+        );
+    }
+    if (opt_desc.is_used(substring_arg)) {
+        filters.emplace_back(
+                std::make_unique<substring_filter>(opt_desc.get<std::string>(substring_arg))
+        );
+    }
+
+    for (auto const &log_entry: logs) {
+        if (std::all_of(filters.begin(), filters.end(),
+                        [log_entry](auto const& filter) { return filter->filter(log_entry); })) {
+            std::cout << log_entry.info << '\n';
         }
     }
 
-    if (opt_desc.is_used("--interval")) {
-        auto interval = opt_desc.get<std::vector<std::string>>("--interval");
-        for (auto& v : logs) {
-            if (v.interval == interval[0]+ " " + interval[1])
-                std::cout << v.info << "\n";
-        }
-    }
-    if (opt_desc.is_used("--substring")) {
-        auto str = opt_desc.get<std::string>("--substring");
-        for (auto& v : logs) {
-            if (v.info.find(str) != std::string::npos)
-                std::cout << v.info << "\n";
-        }
-    }
-
+    std::cout.flush();
     return 0;
 }
