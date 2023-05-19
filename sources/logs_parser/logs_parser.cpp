@@ -43,13 +43,14 @@ void i_logs_parser::read_file(const std::filesystem::path &file, std::list<log_i
             if (strptime(current_date.c_str(), "%F %T", &tm)) {
                 logs.emplace_back(*current_log);
                 current_log = std::make_unique<log_info>(
-                        current_string.to_string(),
+                        current,
                         current_date,
                         current.substr(current.find_first_of('(') + 1, 3)
                 );
                 current_string.clear();
             } else {
                 current_string.emplace_back(current);
+                current_log->info.append(current_string.to_string());
             }
         }
     }

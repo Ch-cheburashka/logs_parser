@@ -63,7 +63,7 @@ int main(int argc, char **argv) {
 
     if (opt_desc.is_used(interval_arg)) {
         filters.emplace_back(
-                std::make_unique<interval_filter>(opt_desc.get<std::string>(interval_arg))
+                std::make_unique<interval_filter>(opt_desc.get<std::vector<std::string>>(interval_arg))
         );
     }
     if (opt_desc.is_used(substring_arg)) {

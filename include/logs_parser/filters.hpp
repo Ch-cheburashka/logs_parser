@@ -31,7 +31,7 @@ public:
     substring_filter(const std::string &substring) : substring(substring) {}
 
     bool filter(const log_info &info) override {
-        return info.info.find(substring) == std::string::npos;
+        return info.info.find(substring) != std::string::npos;
     }
 
 private:
@@ -40,15 +40,15 @@ private:
 
 class interval_filter : public i_log_filter {
 public:
-    interval_filter(const std::string &interval) : interval(interval) {
+    interval_filter(const std::vector<std::string> &interval) : interval(interval) {
     }
 
     bool filter(const log_info &info) override {
-        return info.interval == interval;
+        return info.interval == interval[0] + " " + interval[1];
     }
 
 private:
-    std::string interval;
+    std::vector<std::string> interval;
 };
 
 #endif //INCLUDE_LOGS_PARSER_FILTERS_HPP
